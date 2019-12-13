@@ -81,6 +81,11 @@ class App extends Component {
     if (event.key === 'Enter') {
       const todoInput = this.todoInput.current.value;
 
+
+      if (todoInput.trim().length === 0) {
+        return;
+      }
+
       this.setState((prevState, props) => {
         let todos = prevState.todos;
         let idForTodo = prevState.idForTodo + 1;
