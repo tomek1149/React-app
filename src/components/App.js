@@ -68,26 +68,9 @@ class App extends Component {
 
 
 
-  // state = {
-  //   filter: 'all',
-  //   beforeEditCache: '',
-  //   idForTodo: 3,
-  //   todos: [
-  //     {
-  //       'id': 1,
-  //       'title': 'Finish React Screencast',
-  //       'completed': false,
-  //       'editing': false,
-  //     },
-  //     {
-  //       'id': 2,
-  //       'title': 'Take over world',
-  //       'completed': false,
-  //       'editing': false,
-  //     },
-
-  //   ]
-  // }
+  componentDidMount() {
+    this.props.TodoStore.retrieveTodos();
+  }
 }
 
 export default App;

@@ -1,59 +1,93 @@
 import React from 'react';
-import { observable, action, computed } from 'mobx';
+import { observable, action, computed, configure, runInAction } from 'mobx';
+import axios from 'axios';
+axios.defaults.baseURL = 'http://todo-noauth:81/api'
+configure({ enforceActions: true });
 
 
 class TodoStore {
     @observable todoInput = React.createRef();
     @observable filter = 'all';
     @observable beforeEditCache = '';
-    @observable idForTodo = 3;
-    @observable todos = [
-        {
-            'id': 1,
-            'title': 'Finish MobX Screencast',
-            'completed': false,
-            'editing': false,
-        },
-        {
-            'id': 2,
-            'title': 'Take over MobX world',
-            'completed': false,
-            'editing': false,
-        },
-    ];
+    @observable todos = [];
+
+    @action retrieveTodos = () => {
+        axios.get('/todos')
+            .then(response => {
+                let tempTodos = response.data;
+                tempTodos.forEach(todo => todo.editing = false);
+
+                runInAction(() => {
+                    this.todos = response.data;
+                });
+            })
+            .catch(error => {
+                console.log(error)
+            });
+    }
 
     @action addTodo = event => {
         if (event.key === 'Enter') {
             const todoInput = this.todoInput.current.value;
 
-
             if (todoInput.trim().length === 0) {
                 return;
             }
 
-            this.todos.push({
-                id: this.idForTodo,
+            axios.post('/todos', {
                 title: todoInput,
                 completed: false,
-                editing: false,
             })
+                .then(response => {
+                    runInAction(() => {
+                        this.todos.push({
+                            id: response.data.id,
+                            title: response.data.title,
+                            completed: false,
+                            editing: false,
+                        });
+                    });
+                })
+                .catch(error => {
+                    console.log(error)
+                });
 
-            this.idForTodo++;
             this.todoInput.current.value = '';
         }
     }
-    @action deleteTodo = id => {
-        const index = this.todos.findIndex(item => item.id === id)
 
-        this.todos.splice(index, 1);
+
+    @action deleteTodo = id => {
+        axios.delete('/todos/' + id)
+            .then(response => {
+                runInAction(() => {
+                    const index = this.todos.findIndex(item => item.id === id)
+                    this.todos.splice(index, 1);
+                });
+            })
+            .catch(error => {
+                console.log(error)
+            });
     }
 
     @action checkTodo = (todo, event) => {
-        todo.completed = !todo.completed;
 
-        const index = this.todos.findIndex(item => item.id === todo.id)
 
-        this.todos.splice(index, 1, todo);
+
+        axios.patch('/todos/' + todo.id, {
+            title: todo.title,
+            completed: !todo.completed,
+        })
+            .then(response => {
+                runInAction(() => {
+                    todo.completed = !todo.completed;
+                    const index = this.todos.findIndex(item => item.id === todo.id);
+                    this.todos.splice(index, 1, todo);
+                });
+            })
+            .catch(error => {
+                console.log(error)
+            });
     }
 
 
@@ -76,9 +110,20 @@ class TodoStore {
 
             todo.title = event.target.value;
         }
-        const index = this.todos.findIndex(item => item.id === todo.id)
 
-        this.todos.splice(index, 1, todo);
+        axios.patch('/todos/' + todo.id, {
+            title: todo.title,
+            completed: todo.completed,
+        })
+            .then(response => {
+                runInAction(() => {
+                    const index = this.todos.findIndex(item => item.id === todo.id)
+                    this.todos.splice(index, 1, todo);
+                });
+            })
+            .catch(error => {
+                console.log(error)
+            });
     }
 
 
@@ -94,6 +139,20 @@ class TodoStore {
 
     @action checkAllTodos = (event) => {
         this.todos.forEach((todo) => todo.completed = event.target.checked);
+
+
+        axios.patch('/todosCheckAll', {
+            completed: event.target.checked,
+        })
+            .then(response => {
+                runInAction(() => {
+                    this.todos.forEach((todo) => todo.completed = event.target.checked);
+
+                });
+            })
+            .catch(error => {
+                console.log(error)
+            });
     }
 
     @action updateFilter = filter => {
@@ -101,7 +160,25 @@ class TodoStore {
     }
 
     @action clearCompleted = () => {
-        this.todos = this.todos.filter(todo => !todo.completed)
+
+        const completed = this.todos.filter(todo => todo.completed).map(todo => todo.id);
+
+
+        axios.delete('/todosDeleteCompleted', {
+            data: {
+                todos: completed
+            }
+        })
+            .then(response => {
+                runInAction(() => {
+                    this.todos = this.todos.filter(todo => !todo.completed)
+                });
+            })
+            .catch(error => {
+                console.log(error)
+            });
+
+
     }
 
     @computed get todosCompletedCount() {
