@@ -184,6 +184,7 @@ class App extends Component {
 
         todo.title = event.target.value;
       }
+
       todos.splice(index, 1, todo);
 
       return { todos };
@@ -202,6 +203,7 @@ class App extends Component {
 
       return { todos };
     });
+    check
 
   }
 
