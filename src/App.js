@@ -203,7 +203,6 @@ class App extends Component {
 
       return { todos };
     });
-    check
 
   }
 
