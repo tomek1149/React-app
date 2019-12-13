@@ -14,7 +14,7 @@ class App extends Component {
           <input
             type="text"
             className="todo-input"
-            placeholder="What needs to be done" onKeyUp={this.addTodo} />
+            placeholder="What needs to be done" ref={this.todoInput} onKeyUp={this.addTodo} />
 
           {this.state.todos.map((todo, index) =>
 
@@ -54,7 +54,12 @@ class App extends Component {
       </div>
     );
   }
+
+  todoInput = React.createRef();
+
+
   state = {
+    idForTodo: 3,
     todos: [
       {
         'id': 1,
@@ -70,6 +75,28 @@ class App extends Component {
       },
 
     ]
+  }
+
+  addTodo = event => {
+    if (event.key === 'Enter') {
+      const todoInput = this.todoInput.current.value;
+
+      this.setState((prevState, props) => {
+        let todos = prevState.todos;
+        let idForTodo = prevState.idForTodo + 1;
+
+        todos.push({
+          id: idForTodo,
+          title: todoInput,
+          completed: false,
+        });
+
+
+        return { todos, idForTodo };
+      });
+
+      this.todoInput.current.value = '';
+    }
   }
 }
 
